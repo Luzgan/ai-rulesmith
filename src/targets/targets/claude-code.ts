@@ -1,0 +1,12 @@
+import type { TargetDefinition } from '../target.types.js';
+
+export const claudeCodeTarget: TargetDefinition = {
+  name: 'Claude Code',
+  description: 'Anthropic Claude Code (CLAUDE.md)',
+  output: {
+    mainFilePath: 'CLAUDE.md',
+    stepFilePattern: '.context-builder/steps/step-{{step_index}}-{{step_slug}}.md',
+    requiredDirs: ['.context-builder/steps'],
+    supportsFileReferences: true,
+  },
+};

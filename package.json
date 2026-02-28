@@ -1,0 +1,62 @@
+{
+  "name": "context-builder",
+  "version": "0.1.0",
+  "description": "Compose AI agent context files from reusable markdown rules",
+  "type": "module",
+  "bin": {
+    "context-builder": "./dist/bin/context-builder.js",
+    "cb": "./dist/bin/context-builder.js"
+  },
+  "files": [
+    "dist/",
+    "rules/"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx bin/context-builder.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ bin/ test/",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "rules",
+    "context",
+    "claude",
+    "cursor",
+    "copilot",
+    "markdown",
+    "cli"
+  ],
+  "author": "Luzgan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Luzgan/context-builder.git"
+  },
+  "homepage": "https://github.com/Luzgan/context-builder#readme",
+  "bugs": {
+    "url": "https://github.com/Luzgan/context-builder/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "gray-matter": "^4.0.3",
+    "marked": "^15.0.7",
+    "marked-terminal": "^7.3.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "eslint": "^9.20.0",
+    "prettier": "^3.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+*.log
+
+# Generated context files (output of context-builder build)
+CLAUDE.md
+.context-builder/steps/

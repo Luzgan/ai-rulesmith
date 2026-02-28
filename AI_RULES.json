@@ -1,0 +1,44 @@
+[
+  {
+    "target": "Claude Code",
+    "ai_workflow": {
+      "type": "steps",
+      "steps": [
+        {
+          "step_name": "Create",
+          "description": "Implement features following project coding standards.",
+          "rules": [
+            "code-style/strict-typescript",
+            "code-style/prefer-functional-style",
+            "code-style/small-focused-functions",
+            "code-style/descriptive-naming",
+            "code-style/early-returns-and-guards",
+            "code-style/immutable-by-default",
+            "code-style/no-hardcoded-values",
+            "error-handling/actionable-error-messages",
+            "error-handling/typed-errors",
+            "testing/isolated-unit-tests",
+            "testing/never-weaken-tests",
+            "workflow/test-driven-development",
+            "workflow/understand-before-changing",
+            "workflow/incremental-changes",
+            "workflow/verify-before-completing",
+            "ai-behavior/confirm-destructive-actions",
+            "git/conventional-commits",
+            "git/feature-branch-workflow"
+          ]
+        },
+        {
+          "step_name": "Review",
+          "description": "Review the implementation for quality and security.",
+          "rules": [
+            "review/thorough-code-review",
+            "review/security-audit",
+            "security/validate-external-input",
+            "security/never-expose-secrets"
+          ]
+        }
+      ]
+    }
+  }
+]
