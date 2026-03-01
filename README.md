@@ -141,13 +141,13 @@ Workflow-level `before_start`/`before_finish` apply to **every step**. Per-step 
 
 | Target | Output File | Step Files |
 |--------|------------|------------|
-| `Claude Code` | `CLAUDE.md` | `.context-builder/steps/` |
+| `Claude Code` | `CLAUDE.md` | `.rulesmith/steps/` |
 | `Cursor` | `.cursorrules` | `.cursor/rules/` |
 | `GitHub Copilot` | `.github/copilot-instructions.md` | `.github/instructions/` |
 | `Windsurf` | `.windsurfrules` | `.windsurf/rules/` |
-| `Codex` | `AGENTS.md` | `.context-builder/steps/` |
-| `Generic` | `AGENTS.md` | `.context-builder/steps/` |
-| `custom` | (set `output_path`) | `.context-builder/steps/` |
+| `Codex` | `AGENTS.md` | `.rulesmith/steps/` |
+| `Generic` | `AGENTS.md` | `.rulesmith/steps/` |
+| `custom` | (set `output_path`) | `.rulesmith/steps/` |
 
 ## Built-in Rules
 
@@ -192,7 +192,7 @@ Rules are resolved in order: **project → global → built-in**. A rule at a hi
 
 | Level | Location | Scope |
 |-------|----------|-------|
-| Project | `.context-builder/rules/<category>/<name>.md` | This project only |
+| Project | `.rulesmith/rules/<category>/<name>.md` | This project only |
 | Global | `~/.config/rulesmith/rules/<category>/<name>.md` | All your projects |
 | Built-in | Shipped with the package | Everyone |
 

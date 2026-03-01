@@ -23,7 +23,7 @@ function resolveTarget(config: TargetConfig): TargetDefinition {
   const target = getTarget(config.target);
   if (!target) {
     throw new Error(
-      `Unknown target: "${config.target}". Use "context-builder list-targets" to see available targets.`,
+      `Unknown target: "${config.target}". Use "rulesmith list-targets" to see available targets.`,
     );
   }
   return target;

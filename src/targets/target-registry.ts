@@ -37,8 +37,8 @@ export function getCustomTarget(outputPath: string, targetName?: string): Target
     description: `Custom target (${outputPath})`,
     output: {
       mainFilePath: outputPath,
-      stepFilePattern: '.context-builder/steps/step-{{step_index}}-{{step_slug}}.md',
-      requiredDirs: ['.context-builder/steps'],
+      stepFilePattern: '.rulesmith/steps/step-{{step_index}}-{{step_slug}}.md',
+      requiredDirs: ['.rulesmith/steps'],
       supportsFileReferences: true,
     },
   };

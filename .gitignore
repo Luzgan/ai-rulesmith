@@ -4,6 +4,6 @@ dist/
 .DS_Store
 *.log
 
-# Generated context files (output of context-builder build)
+# Generated context files (output of rulesmith build)
 CLAUDE.md
-.context-builder/steps/
+.rulesmith/steps/

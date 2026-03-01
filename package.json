@@ -4,9 +4,9 @@
   "description": "Compose AI agent context files from reusable markdown rules",
   "type": "module",
   "bin": {
-    "ai-rulesmith": "./dist/bin/context-builder.js",
-    "rulesmith": "./dist/bin/context-builder.js",
-    "cb": "./dist/bin/context-builder.js"
+    "ai-rulesmith": "./dist/bin/rulesmith.js",
+    "rulesmith": "./dist/bin/rulesmith.js",
+    "cb": "./dist/bin/rulesmith.js"
   },
   "files": [
     "dist/",
@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "tsx bin/context-builder.ts",
+    "dev": "tsx bin/rulesmith.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "lint": "eslint src/ bin/",

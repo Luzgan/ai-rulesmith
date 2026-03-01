@@ -18,7 +18,7 @@ function getGlobalRulesDir(): string {
 }
 
 function getCustomRulesDir(projectDir: string): string {
-  return resolve(projectDir, '.context-builder', 'rules');
+  return resolve(projectDir, '.rulesmith', 'rules');
 }
 
 export function resolveRule(slug: string, projectDir: string): ResolvedRule {

@@ -61,5 +61,5 @@ export const initCommand = new Command('init')
 
     writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
     log.success('Created AI_RULES.json');
-    log.dim('Edit the file to configure your rules, then run: context-builder build');
+    log.dim('Edit the file to configure your rules, then run: rulesmith build');
   });

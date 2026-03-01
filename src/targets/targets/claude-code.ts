@@ -5,8 +5,8 @@ export const claudeCodeTarget: TargetDefinition = {
   description: 'Anthropic Claude Code (CLAUDE.md)',
   output: {
     mainFilePath: 'CLAUDE.md',
-    stepFilePattern: '.context-builder/steps/step-{{step_index}}-{{step_slug}}.md',
-    requiredDirs: ['.context-builder/steps'],
+    stepFilePattern: '.rulesmith/steps/step-{{step_index}}-{{step_slug}}.md',
+    requiredDirs: ['.rulesmith/steps'],
     supportsFileReferences: true,
   },
 };
