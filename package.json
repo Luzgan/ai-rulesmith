@@ -1,6 +1,6 @@
 {
   "name": "ai-rulesmith",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Compose AI agent context files from reusable markdown rules",
   "type": "module",
   "bin": {
