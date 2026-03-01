@@ -24,7 +24,7 @@ jobs:
 
   release:
     needs: check
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -37,7 +37,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
 
       - run: npm ci
@@ -68,11 +68,21 @@ jobs:
           echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "Bump: $BUMP"
 
-      - name: Bump version, tag, and publish
+      - name: Bump version and tag
         if: steps.bump.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          npm version ${{ steps.bump.outputs.level }}
-          git push --follow-tags
-          npm publish --provenance --access public
+          NEXT_VERSION=$(npm version ${{ steps.bump.outputs.level }} --no-git-tag-version)
+          if git rev-parse "$NEXT_VERSION" >/dev/null 2>&1; then
+            echo "Tag $NEXT_VERSION already exists — skipping bump"
+          else
+            git add package.json package-lock.json
+            git commit -m "$NEXT_VERSION"
+            git tag "$NEXT_VERSION"
+            git push --follow-tags
+          fi
+
+      - name: Publish to npm
+        if: steps.bump.outputs.skip != 'true'
+        run: npm publish --provenance --access public
