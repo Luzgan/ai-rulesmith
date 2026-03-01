@@ -8,7 +8,7 @@ Every AI coding agent reads a different file — Claude Code wants `CLAUDE.md`, 
 
 AI Rulesmith solves this the same way ESLint solved linting config: you define your rules once, compose them into the set that fits your project, and the tool generates the right output for each agent. Like ESLint's shareable configs, rules are small, focused atoms — each one enforces a single practice. You pick the ones you need, skip the ones you don't, and override any with your own.
 
-The built-in ruleset ships with 28 rules across 9 categories, distilled from proven patterns found across the AI coding community. But the real value is the model: define once, build for every agent, keep projects consistent without copying and pasting between files you can never remember the name of.
+The built-in ruleset ships with 29 rules across 9 categories, distilled from proven patterns found across the AI coding community. But the real value is the model: define once, build for every agent, keep projects consistent without copying and pasting between files you can never remember the name of.
 
 ## Install
 
@@ -174,6 +174,7 @@ Rules are referenced by slug (e.g., `"code-style/strict-typescript"`). Run `rule
 | `error-handling/typed-errors` | Custom error types, structured API responses, error codes for programmatic handling |
 | `git/conventional-commits` | Structured commit messages with type, scope, and meaningful descriptions |
 | `git/feature-branch-workflow` | Branch before changes, merge when green |
+| `git/semantic-versioning` | Classify commits by semver impact using conventional commit prefixes |
 | `review/security-audit` | Input validation, injection prevention, secret handling, least privilege |
 | `review/thorough-code-review` | Trace logic, check edge cases, verify error handling and naming |
 | `security/never-expose-secrets` | Keep credentials, tokens, and PII out of logs, errors, and source code |
