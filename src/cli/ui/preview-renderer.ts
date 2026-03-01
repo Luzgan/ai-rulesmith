@@ -3,6 +3,7 @@ import TerminalRenderer from 'marked-terminal';
 import chalk from 'chalk';
 import type { CompositionResult } from '../../types/composer.types.js';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 marked.setOptions({ renderer: new TerminalRenderer() as any });
 
 export function renderPreview(targetName: string, result: CompositionResult): void {

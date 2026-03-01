@@ -1,4 +1,4 @@
-# Context Builder
+# AI Rulesmith
 
 CLI tool to compose AI agent context files from reusable markdown rules.
 
@@ -6,33 +6,33 @@ CLI tool to compose AI agent context files from reusable markdown rules.
 
 Every AI coding agent reads a different file — Claude Code wants `CLAUDE.md`, Cursor wants `.cursorrules`, Copilot wants `.github/copilot-instructions.md`, Codex wants `AGENTS.md`. The rules inside are often the same, but you have to remember the right filename, the right location, and maintain each one separately.
 
-Context Builder solves this the same way ESLint solved linting config: you define your rules once, compose them into the set that fits your project, and the tool generates the right output for each agent. Like ESLint's shareable configs, rules are small, focused atoms — each one enforces a single practice. You pick the ones you need, skip the ones you don't, and override any with your own.
+AI Rulesmith solves this the same way ESLint solved linting config: you define your rules once, compose them into the set that fits your project, and the tool generates the right output for each agent. Like ESLint's shareable configs, rules are small, focused atoms — each one enforces a single practice. You pick the ones you need, skip the ones you don't, and override any with your own.
 
 The built-in ruleset ships with 28 rules across 9 categories, distilled from proven patterns found across the AI coding community. But the real value is the model: define once, build for every agent, keep projects consistent without copying and pasting between files you can never remember the name of.
 
 ## Install
 
 ```bash
-npm install -g context-builder
+npm install -g ai-rulesmith
 ```
 
-This makes `context-builder` (and the short alias `cb`) available globally.
+This makes `ai-rulesmith` (and aliases `rulesmith`, `cb`) available globally.
 
 ## Quick Start
 
 ```bash
 # 1. Initialize config in your project
-context-builder init
+rulesmith init
 
 # 2. Edit AI_RULES.json to configure your rules and targets
 
 # 3. Build context files
-context-builder build
+rulesmith build
 ```
 
 ## How It Works
 
-You create an `AI_RULES.json` in your project root. It defines which rules to include and which agents to target. Context Builder composes the rules into the correct output files — one config, multiple agents.
+You create an `AI_RULES.json` in your project root. It defines which rules to include and which agents to target. AI Rulesmith composes the rules into the correct output files — one config, multiple agents.
 
 ### Standard Workflow
 
@@ -44,12 +44,13 @@ Composes rules sequentially into a single output file:
     "target": "Claude Code",
     "ai_workflow": {
       "type": "standard",
-      "preamble": "TypeScript ESM project using Vitest for testing. Run `npm test` to run tests, `npm run lint` to lint, `npm run typecheck` to type-check.",
+      "preamble": "TypeScript ESM project using Vitest for testing.",
+      "before_start": ["workflow/understand-before-changing"],
       "rules": [
         "code-style/strict-typescript",
-        "testing/isolated-unit-tests",
-        "git/conventional-commits"
-      ]
+        "testing/isolated-unit-tests"
+      ],
+      "before_finish": ["workflow/verify-before-completing", "git/conventional-commits"]
     }
   }
 ]
@@ -65,6 +66,8 @@ Creates a multi-step workflow where each step gets its own rule file. The main o
     "target": "Claude Code",
     "ai_workflow": {
       "type": "steps",
+      "before_start": ["workflow/understand-before-changing", "git/feature-branch-workflow"],
+      "before_finish": ["workflow/verify-before-completing", "git/conventional-commits"],
       "steps": [
         {
           "step_name": "Create",
@@ -114,11 +117,25 @@ Target multiple agents from a single config. The same rules, different output fi
 | `output_path` | No | Override the default output file path |
 | `ai_workflow.type` | Yes | `"standard"` or `"steps"` |
 | `ai_workflow.preamble` | No | Text inserted at the top of the output, before rules |
-| `ai_workflow.rules` | Yes* | Rule slugs (standard workflow only) |
+| `ai_workflow.before_start` | No | Rules placed in a "Before You Start" section (see Priority Zones) |
+| `ai_workflow.before_finish` | No | Rules placed in a "Before You Finish" section (see Priority Zones) |
+| `ai_workflow.rules` | Yes* | Rule slugs or rule objects with variables (standard workflow only) |
 | `ai_workflow.steps` | Yes* | Array of steps (steps workflow only) |
 | `ai_workflow.steps[].step_name` | Yes | Step label |
 | `ai_workflow.steps[].description` | No | Short description of the step |
-| `ai_workflow.steps[].rules` | Yes | Rule slugs for this step |
+| `ai_workflow.steps[].rules` | Yes | Rule slugs or rule objects with variables for this step |
+| `ai_workflow.steps[].before_start` | No | Additional per-step "Before You Start" rules (merged with workflow-level) |
+| `ai_workflow.steps[].before_finish` | No | Additional per-step "Before You Finish" rules (merged with workflow-level) |
+
+### Priority Zones
+
+LLMs pay most attention to instructions at the **beginning and end** of their context, with the middle being a lower-attention zone. Priority zones let you control where rules appear in the generated output so that critical behavioral rules aren't buried among coding standards.
+
+- **`before_start`** — Rules placed at the **top** of each step file (or the output file for standard workflows), under a "Before You Start" heading. Use for rules the agent must follow before writing any code: understanding the codebase, creating a branch, confirming approach.
+- **`before_finish`** — Rules placed at the **bottom**, under a "Before You Finish" heading. Use for rules the agent must follow after implementation: running tests, committing with conventional format, updating project trackers.
+- **`rules`** — Everything in between. Technical coding standards, error handling patterns, testing conventions.
+
+Workflow-level `before_start`/`before_finish` apply to **every step**. Per-step `before_start`/`before_finish` add step-specific rules (merged after the workflow-level ones).
 
 ## Supported Targets
 
@@ -136,7 +153,7 @@ Target multiple agents from a single config. The same rules, different output fi
 
 Rules are small, focused atoms — like ESLint rules. Each one enforces a single practice. You compose them into the set that fits your project.
 
-Rules are referenced by slug (e.g., `"code-style/strict-typescript"`). Run `context-builder list-rules` to see all available rules.
+Rules are referenced by slug (e.g., `"code-style/strict-typescript"`). Run `rulesmith list-rules` to see all available rules.
 
 | Slug | Description |
 |------|-------------|
@@ -171,7 +188,15 @@ Rules are referenced by slug (e.g., `"code-style/strict-typescript"`). Run `cont
 
 ## Custom Rules
 
-Create custom rules in your project at `.context-builder/rules/<category>/<name>.md`. Custom rules override built-in rules with the same slug, so you can replace any built-in rule with your own version.
+Rules are resolved in order: **project → global → built-in**. A rule at a higher level overrides the same slug at a lower level.
+
+| Level | Location | Scope |
+|-------|----------|-------|
+| Project | `.context-builder/rules/<category>/<name>.md` | This project only |
+| Global | `~/.config/rulesmith/rules/<category>/<name>.md` | All your projects |
+| Built-in | Shipped with the package | Everyone |
+
+Global rules are useful for personal or company-wide standards you want across all projects without copying files. Project rules override global rules with the same slug if you need a project-specific variant.
 
 Rule files are plain markdown with optional YAML frontmatter:
 
@@ -189,66 +214,146 @@ tags: [custom, example]
 - Another guideline
 ```
 
+## Rule Variables
+
+Rules can declare `{{variables}}` that get filled in from your config. This lets you write reusable rules that adapt to each project — for example, a "track progress" rule that takes the project name as a variable.
+
+### Declaring variables in a rule
+
+Add a `vars` section to the frontmatter. Each variable can have a description, a `required` flag, and a `default` value:
+
+```markdown
+---
+name: Track Project Progress
+description: Update project tracker after completing tasks
+vars:
+  project_name:
+    description: Name of the project in the tracker
+    required: true
+  tracker:
+    description: Which tracker to use
+    default: life_manager
+---
+
+# Track Project Progress
+
+- After completing a task, update the **{{project_name}}** project in {{tracker}}
+```
+
+### Providing values in config
+
+Instead of a plain slug string, use an object with `slug` and `vars`:
+
+```json
+{
+  "rules": [
+    "code-style/strict-typescript",
+    {
+      "slug": "workflow/track-project-progress",
+      "vars": {
+        "project_name": "My App"
+      }
+    }
+  ]
+}
+```
+
+Variables with a `default` in the rule frontmatter don't need to be provided — the default is used automatically. Variables marked `required: true` will error if not provided.
+
 ## CLI Commands
 
-### `context-builder build`
+### `rulesmith build`
 
 Compose rules into output files. This is the default command.
 
 ```bash
-context-builder build                    # Build all targets
-context-builder build -t "Claude Code"   # Build specific target
-context-builder build --dry-run          # Preview only
-context-builder build --force            # Overwrite without confirmation
-context-builder build --no-preview       # Skip terminal preview
-context-builder build -c ./custom.json   # Use custom config path
+rulesmith build                    # Build all targets
+rulesmith build -t "Claude Code"   # Build specific target
+rulesmith build --dry-run          # Preview only
+rulesmith build --force            # Overwrite without confirmation
+rulesmith build --no-preview       # Skip terminal preview
+rulesmith build -c ./custom.json   # Use custom config path
 ```
 
-### `context-builder init`
+### `rulesmith init`
 
 Scaffold a starter `AI_RULES.json`:
 
 ```bash
-context-builder init
-context-builder init --target "Cursor"
-context-builder init --workflow steps
+rulesmith init
+rulesmith init --target "Cursor"
+rulesmith init --workflow steps
 ```
 
-### `context-builder preview`
+### `rulesmith preview`
 
 Preview composed output in the terminal without writing files:
 
 ```bash
-context-builder preview
-context-builder preview -t "Claude Code"
+rulesmith preview
+rulesmith preview -t "Claude Code"
 ```
 
-### `context-builder validate`
+### `rulesmith validate`
 
 Validate config and check all referenced rules exist:
 
 ```bash
-context-builder validate
+rulesmith validate
 ```
 
-### `context-builder list-rules`
+### `rulesmith list-rules`
 
 List available rules:
 
 ```bash
-context-builder list-rules
-context-builder list-rules --built-in
-context-builder list-rules --custom
-context-builder list-rules --category code-style
+rulesmith list-rules
+rulesmith list-rules --built-in
+rulesmith list-rules --custom
+rulesmith list-rules --category code-style
 ```
 
-### `context-builder list-targets`
+### `rulesmith list-targets`
 
 List supported targets and their output paths:
 
 ```bash
-context-builder list-targets
+rulesmith list-targets
 ```
+
+### `rulesmith test`
+
+Run scenario tests to verify your rules actually influence agent behavior. Uses an LLM to simulate scenarios and a judge model to evaluate whether assertions pass:
+
+```bash
+rulesmith test                           # Run all scenarios
+rulesmith test --scenario "follows step" # Run matching scenarios
+rulesmith test --target "Claude Code"    # Filter by target
+rulesmith test --verbose                 # Show full LLM responses
+rulesmith test --reset-keys              # Re-prompt for API keys
+```
+
+Test scenarios are defined in `AI_RULES.test.json`:
+
+```json
+{
+  "models": ["anthropic/sonnet"],
+  "judge": "anthropic/haiku",
+  "scenarios": [
+    {
+      "name": "Agent follows step workflow",
+      "target": "Claude Code",
+      "prompt": "Add a new CLI command called 'stats'.",
+      "assertions": [
+        "Response mentions reading the rules file before starting",
+        "Response does not immediately start writing code"
+      ]
+    }
+  ]
+}
+```
+
+Models can use shorthand aliases like `"anthropic/sonnet"` or full IDs like `"claude-sonnet-4-20250514"`. API keys are resolved from environment variables (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) or prompted interactively and saved to the macOS Keychain.
 
 ## Contributing
 

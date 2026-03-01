@@ -1,10 +1,16 @@
-import type { TargetConfig } from '../types/config.types.js';
+import type { TargetConfig, RuleEntry } from '../types/config.types.js';
 import type { CompositionResult, BuildResult, BuildError } from '../types/composer.types.js';
 import type { TargetDefinition } from '../targets/target.types.js';
+import type { ResolvedRule } from '../types/rule.types.js';
 import { getTarget, getCustomTarget } from '../targets/target-registry.js';
 import { resolveRules } from './rule-resolver.js';
 import { composeStandard } from './standard-composer.js';
 import { composeSteps } from './steps-composer.js';
+
+function resolveOptionalRules(entries: RuleEntry[] | undefined, projectDir: string): ResolvedRule[] {
+  if (!entries || entries.length === 0) return [];
+  return resolveRules(entries, projectDir);
+}
 
 function resolveTarget(config: TargetConfig): TargetDefinition {
   if (config.target === 'custom') {
@@ -27,17 +33,29 @@ function composeOne(config: TargetConfig, projectDir: string): CompositionResult
   const target = resolveTarget(config);
   const outputPath = config.output_path ?? target.output.mainFilePath;
 
-  if (config.ai_workflow.type === 'standard') {
-    const rules = resolveRules(config.ai_workflow.rules, projectDir);
-    return composeStandard(rules, config.ai_workflow, target, outputPath);
+  const workflow = config.ai_workflow;
+  const workflowBeforeStart = resolveOptionalRules(workflow.before_start, projectDir);
+  const workflowBeforeFinish = resolveOptionalRules(workflow.before_finish, projectDir);
+
+  if (workflow.type === 'standard') {
+    const rules = resolveRules(workflow.rules, projectDir);
+    return composeStandard(rules, workflowBeforeStart, workflowBeforeFinish, workflow, target, outputPath);
   }
 
   // Steps workflow
-  const stepsWithRules = config.ai_workflow.steps.map((step) => ({
+  const stepsWithRules = workflow.steps.map((step) => ({
     step,
     rules: resolveRules(step.rules, projectDir),
+    beforeStart: [
+      ...workflowBeforeStart,
+      ...resolveOptionalRules(step.before_start, projectDir),
+    ],
+    beforeFinish: [
+      ...workflowBeforeFinish,
+      ...resolveOptionalRules(step.before_finish, projectDir),
+    ],
   }));
-  return composeSteps(stepsWithRules, config.ai_workflow, target, outputPath);
+  return composeSteps(stepsWithRules, workflow, target, outputPath);
 }
 
 export function buildAll(

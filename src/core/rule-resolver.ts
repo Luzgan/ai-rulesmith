@@ -1,16 +1,20 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 import matter from 'gray-matter';
 import type { ResolvedRule, RuleFrontmatter, RuleListEntry } from '../types/rule.types.js';
-import { readdirSync, statSync } from 'node:fs';
+import type { RuleEntry } from '../types/config.types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 function getBuiltInRulesDir(): string {
-  // Navigate from dist/src/core/ up to package root, then into rules/
   return resolve(__dirname, '..', '..', '..', 'rules');
+}
+
+function getGlobalRulesDir(): string {
+  return resolve(homedir(), '.config', 'rulesmith', 'rules');
 }
 
 function getCustomRulesDir(projectDir: string): string {
@@ -19,15 +23,20 @@ function getCustomRulesDir(projectDir: string): string {
 
 export function resolveRule(slug: string, projectDir: string): ResolvedRule {
   const customPath = join(getCustomRulesDir(projectDir), `${slug}.md`);
+  const globalPath = join(getGlobalRulesDir(), `${slug}.md`);
   const builtInPath = join(getBuiltInRulesDir(), `${slug}.md`);
 
   let filePath: string;
   if (existsSync(customPath)) {
     filePath = customPath;
+  } else if (existsSync(globalPath)) {
+    filePath = globalPath;
   } else if (existsSync(builtInPath)) {
     filePath = builtInPath;
   } else {
-    throw new Error(`Rule not found: "${slug}"\n  Checked:\n    ${customPath}\n    ${builtInPath}`);
+    throw new Error(
+      `Rule not found: "${slug}"\n  Checked:\n    ${customPath}\n    ${globalPath}\n    ${builtInPath}`
+    );
   }
 
   const raw = readFileSync(filePath, 'utf-8');
@@ -44,13 +53,48 @@ export function resolveRule(slug: string, projectDir: string): ResolvedRule {
   };
 }
 
-export function resolveRules(slugs: string[], projectDir: string): ResolvedRule[] {
+function normalizeRuleEntry(entry: RuleEntry): { slug: string; vars: Record<string, string> } {
+  if (typeof entry === 'string') {
+    return { slug: entry, vars: {} };
+  }
+  return { slug: entry.slug, vars: entry.vars ?? {} };
+}
+
+export function applyVariables(rule: ResolvedRule, vars: Record<string, string>): ResolvedRule {
+  const declared = rule.frontmatter?.vars ?? {};
+
+  // Build final values: defaults first, then provided vars
+  const finalVars: Record<string, string> = {};
+  for (const [name, def] of Object.entries(declared)) {
+    if (vars[name] !== undefined) {
+      finalVars[name] = vars[name];
+    } else if (def.default !== undefined) {
+      finalVars[name] = def.default;
+    } else if (def.required) {
+      throw new Error(
+        `Rule "${rule.slug}" requires variable "{{${name}}}" but it was not provided.\n  Add it to your AI_RULES.json: { "slug": "${rule.slug}", "vars": { "${name}": "..." } }`
+      );
+    }
+  }
+
+  // Replace {{varName}} placeholders in content
+  let content = rule.content;
+  for (const [name, value] of Object.entries(finalVars)) {
+    content = content.replaceAll(`{{${name}}}`, value);
+  }
+
+  return { ...rule, content };
+}
+
+export function resolveRules(entries: RuleEntry[], projectDir: string): ResolvedRule[] {
   const errors: string[] = [];
   const resolved: ResolvedRule[] = [];
 
-  for (const slug of slugs) {
+  for (const entry of entries) {
     try {
-      resolved.push(resolveRule(slug, projectDir));
+      const { slug, vars } = normalizeRuleEntry(entry);
+      const rule = resolveRule(slug, projectDir);
+      resolved.push(Object.keys(vars).length > 0 ? applyVariables(rule, vars) : rule);
     } catch (err) {
       errors.push((err as Error).message);
     }
@@ -84,18 +128,16 @@ function collectSlugs(dir: string, prefix: string = ''): string[] {
   return slugs;
 }
 
-export function listAvailableRules(projectDir: string): RuleListEntry[] {
-  const builtInDir = getBuiltInRulesDir();
-  const customDir = getCustomRulesDir(projectDir);
-
-  const builtInSlugs = collectSlugs(builtInDir);
-  const customSlugs = collectSlugs(customDir);
-
+function collectEntries(
+  slugs: string[],
+  projectDir: string,
+  source: RuleListEntry['source'],
+  seen: Set<string>,
+): RuleListEntry[] {
   const entries: RuleListEntry[] = [];
-  const seen = new Set<string>();
 
-  // Custom rules first (they override built-in)
-  for (const slug of customSlugs) {
+  for (const slug of slugs) {
+    if (seen.has(slug)) continue;
     seen.add(slug);
     const rule = resolveRule(slug, projectDir);
     entries.push({
@@ -103,21 +145,24 @@ export function listAvailableRules(projectDir: string): RuleListEntry[] {
       name: rule.frontmatter?.name ?? slugToTitle(slug),
       description: rule.frontmatter?.description ?? '',
       category: rule.frontmatter?.category ?? slug.split('/')[0],
-      source: 'custom',
+      source,
     });
   }
 
-  for (const slug of builtInSlugs) {
-    if (seen.has(slug)) continue;
-    const rule = resolveRule(slug, projectDir);
-    entries.push({
-      slug,
-      name: rule.frontmatter?.name ?? slugToTitle(slug),
-      description: rule.frontmatter?.description ?? '',
-      category: rule.frontmatter?.category ?? slug.split('/')[0],
-      source: 'built-in',
-    });
-  }
+  return entries;
+}
+
+export function listAvailableRules(projectDir: string): RuleListEntry[] {
+  const customSlugs = collectSlugs(getCustomRulesDir(projectDir));
+  const globalSlugs = collectSlugs(getGlobalRulesDir());
+  const builtInSlugs = collectSlugs(getBuiltInRulesDir());
+
+  const seen = new Set<string>();
+  const entries: RuleListEntry[] = [
+    ...collectEntries(customSlugs, projectDir, 'custom', seen),
+    ...collectEntries(globalSlugs, projectDir, 'global', seen),
+    ...collectEntries(builtInSlugs, projectDir, 'built-in', seen),
+  ];
 
   return entries.sort((a, b) => a.slug.localeCompare(b.slug));
 }

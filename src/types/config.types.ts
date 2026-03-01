@@ -1,19 +1,32 @@
+export interface RuleReference {
+  slug: string;
+  vars?: Record<string, string>;
+}
+
+export type RuleEntry = string | RuleReference;
+
 export interface StepConfig {
   step_name: string;
   description?: string | null;
-  rules: string[];
+  rules: RuleEntry[];
+  before_start?: RuleEntry[];
+  before_finish?: RuleEntry[];
 }
 
 export interface StandardWorkflowConfig {
   type: 'standard';
   preamble?: string | null;
-  rules: string[];
+  rules: RuleEntry[];
+  before_start?: RuleEntry[];
+  before_finish?: RuleEntry[];
 }
 
 export interface StepsWorkflowConfig {
   type: 'steps';
   preamble?: string | null;
   steps: StepConfig[];
+  before_start?: RuleEntry[];
+  before_finish?: RuleEntry[];
 }
 
 export type WorkflowConfig = StandardWorkflowConfig | StepsWorkflowConfig;

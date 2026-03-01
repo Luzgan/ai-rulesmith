@@ -1,8 +1,15 @@
+export interface RuleVarDefinition {
+  description?: string;
+  required?: boolean;
+  default?: string;
+}
+
 export interface RuleFrontmatter {
   name?: string;
   description?: string;
   category?: string;
   tags?: string[];
+  vars?: Record<string, RuleVarDefinition>;
 }
 
 export interface ResolvedRule {
@@ -17,5 +24,5 @@ export interface RuleListEntry {
   name: string;
   description: string;
   category: string;
-  source: 'built-in' | 'custom';
+  source: 'built-in' | 'global' | 'custom';
 }

@@ -3,6 +3,24 @@
     "target": "Claude Code",
     "ai_workflow": {
       "type": "steps",
+      "preamble": "TypeScript ESM CLI tool (AI Rulesmith). Uses Commander.js, Zod, Vitest. Source in src/, tests in src/**/*.test.ts. Build with tsup.",
+      "before_start": [
+        "workflow/understand-before-changing",
+        "workflow/incremental-changes",
+        "git/feature-branch-workflow",
+        "ai-behavior/confirm-destructive-actions"
+      ],
+      "before_finish": [
+        "workflow/verify-before-completing",
+        "workflow/test-driven-development",
+        "git/conventional-commits",
+        {
+          "slug": "life-manager/track-project-progress",
+          "vars": {
+            "project_name": "AI Rulesmith"
+          }
+        }
+      ],
       "steps": [
         {
           "step_name": "Create",
@@ -18,14 +36,7 @@
             "error-handling/actionable-error-messages",
             "error-handling/typed-errors",
             "testing/isolated-unit-tests",
-            "testing/never-weaken-tests",
-            "workflow/test-driven-development",
-            "workflow/understand-before-changing",
-            "workflow/incremental-changes",
-            "workflow/verify-before-completing",
-            "ai-behavior/confirm-destructive-actions",
-            "git/conventional-commits",
-            "git/feature-branch-workflow"
+            "testing/never-weaken-tests"
           ]
         },
         {

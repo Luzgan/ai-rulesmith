@@ -36,16 +36,21 @@ export const validateCommand = new Command('validate')
       }
 
       // Validate rules exist
-      const slugs: string[] = [];
-      if (config.ai_workflow.type === 'standard') {
-        slugs.push(...config.ai_workflow.rules);
-      } else {
-        for (const step of config.ai_workflow.steps) {
-          slugs.push(...step.rules);
-        }
-      }
+      const workflow = config.ai_workflow;
+      const entries = [
+        ...(workflow.before_start ?? []),
+        ...(workflow.before_finish ?? []),
+        ...(workflow.type === 'standard'
+          ? workflow.rules
+          : workflow.steps.flatMap((step) => [
+              ...(step.before_start ?? []),
+              ...step.rules,
+              ...(step.before_finish ?? []),
+            ])),
+      ];
 
-      for (const slug of slugs) {
+      for (const entry of entries) {
+        const slug = typeof entry === 'string' ? entry : entry.slug;
         try {
           resolveRule(slug, projectDir);
           log.success(`Rule found: ${slug}`);

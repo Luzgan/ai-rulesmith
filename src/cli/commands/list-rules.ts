@@ -4,8 +4,9 @@ import { listAvailableRules } from '../../core/rule-resolver.js';
 import { log } from '../ui/logger.js';
 
 export const listRulesCommand = new Command('list-rules')
-  .description('List all available rules (built-in and custom)')
+  .description('List all available rules (built-in, global, and custom)')
   .option('--built-in', 'Show only built-in rules')
+  .option('--global', 'Show only global rules')
   .option('--custom', 'Show only custom rules')
   .option('--category <category>', 'Filter by category')
   .action((options) => {
@@ -14,6 +15,9 @@ export const listRulesCommand = new Command('list-rules')
 
     if (options.builtIn) {
       rules = rules.filter((r) => r.source === 'built-in');
+    }
+    if (options.global) {
+      rules = rules.filter((r) => r.source === 'global');
     }
     if (options.custom) {
       rules = rules.filter((r) => r.source === 'custom');
@@ -41,7 +45,9 @@ export const listRulesCommand = new Command('list-rules')
     for (const [category, categoryRules] of grouped) {
       console.log(chalk.bold.cyan(`  ${category}/`));
       for (const rule of categoryRules) {
-        const source = rule.source === 'custom' ? chalk.yellow(' (custom)') : '';
+        const source =
+          rule.source === 'custom' ? chalk.yellow(' (custom)') :
+          rule.source === 'global' ? chalk.magenta(' (global)') : '';
         const desc = rule.description ? chalk.dim(` — ${rule.description}`) : '';
         console.log(`    ${rule.slug}${source}${desc}`);
       }

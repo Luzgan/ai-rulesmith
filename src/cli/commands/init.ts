@@ -41,6 +41,7 @@ export const initCommand = new Command('init')
     }
 
     if (options.workflow === 'steps') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (config[0] as any).ai_workflow = {
         type: 'steps',
         steps: [
